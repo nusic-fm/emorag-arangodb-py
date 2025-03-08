@@ -6,7 +6,6 @@ import json
 from dotenv import load_dotenv
 import requests
 import io
-import nx_arangodb as nxadb
 from arango import ArangoClient
 from langchain_community.graphs import ArangoGraph
 from langchain_community.chains.graph_qa.arangodb import ArangoGraphQAChain
