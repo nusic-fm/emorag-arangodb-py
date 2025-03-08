@@ -62,7 +62,8 @@ def query_graph(query):
 
 @app.route("/extract-emotions", methods=["POST"])
 def extract_emotions():
-    content = query_graph("Floating on a cloud of happiness")
+    query = request.json.get("query")
+    content = query_graph(query)
     print(content)
     return jsonify({"content": content}), 200
 
