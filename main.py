@@ -30,6 +30,7 @@ def hello_world():
 
 db = ArangoClient(hosts="https://b2eea5c0fdd9.arangodb.cloud:8529").db(username="root", password="8Ykvx9i54OysfIaCz5gk", verify=True)
 arango_graph = ArangoGraph(db)
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 @tool
 def text_to_aql_to_text(query: str):
