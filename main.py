@@ -176,7 +176,7 @@ def qa():
     # Extract the emotion names from the result
     messages = [
         {"role": "system", "content": "You are a helpful assistant that extracts emotion names from text. Return only the emotion names in an array, no text or explanation"},
-        {"role": "user", "content": f"Extract the emotion names from the following text: {result['result']}"}
+        {"role": "user", "content": f"Extract the tertiary emotion names from the following text: {result['result']}"}
     ]
     ai_msg = llm.invoke(messages)
     # print(f"AI Message: {ai_msg}")
