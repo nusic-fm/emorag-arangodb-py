@@ -104,49 +104,53 @@ def extract_emotions():
 #     print(content)
 #     return jsonify({"content": content}), 200
 
-# def create_graph():
-#     # Graph and Collection Names
-#     GRAPH_NAME = "emotionsGraph"
-#     VERTEX_COLLECTION = "emotions"
-#     EDGE_COLLECTION = "emotion_edges"
+@app.route("/create-graph", methods=["POST"])
+def create_graph():
+    graph_name = request.json.get("graph_name")
+    vertex_collection = request.json.get("vertex_collection")
+    edge_collection = request.json.get("edge_collection")
+    # Graph and Collection Names
+    GRAPH_NAME = graph_name
+    VERTEX_COLLECTION = vertex_collection
+    EDGE_COLLECTION = edge_collection
 
-#     # Ensure collections exist
-#     if not db.has_collection(VERTEX_COLLECTION):
-#         db.create_collection(VERTEX_COLLECTION)
+    # Ensure collections exist
+    if not db.has_collection(VERTEX_COLLECTION):
+        db.create_collection(VERTEX_COLLECTION)
 
-#     if not db.has_collection(EDGE_COLLECTION):
-#         db.create_collection(EDGE_COLLECTION, edge=True)
+    if not db.has_collection(EDGE_COLLECTION):
+        db.create_collection(EDGE_COLLECTION, edge=True)
 
-#     # Create Graph if not exists
-#     if not db.has_graph(GRAPH_NAME):
-#         graph = db.create_graph(GRAPH_NAME)
-#         graph.create_vertex_collection(VERTEX_COLLECTION)
-#         graph.create_edge_definition(
-#             edge_collection=EDGE_COLLECTION,
-#             from_vertex_collections=[VERTEX_COLLECTION],
-#             to_vertex_collections=[VERTEX_COLLECTION]
-#         )
-#     else:
-#         graph = db.graph(GRAPH_NAME)
+    # Create Graph if not exists
+    if not db.has_graph(GRAPH_NAME):
+        graph = db.create_graph(GRAPH_NAME)
+        graph.create_vertex_collection(VERTEX_COLLECTION)
+        graph.create_edge_definition(
+            edge_collection=EDGE_COLLECTION,
+            from_vertex_collections=[VERTEX_COLLECTION],
+            to_vertex_collections=[VERTEX_COLLECTION]
+        )
+    else:
+        graph = db.graph(GRAPH_NAME)
 
-#     # Example dataset
-#     emotion_data = json.load(open("emo.json"))
+    # Example dataset
+    emotion_data = json.load(open("emo.json"))
 
-#     edge_data = [
-#         {"_from": "emotions/Happy", "_to": "emotions/Optimistic", "relation": "subcategory_of"},
-#         {"_from": "emotions/Optimistic", "_to": "emotions/Inspired", "relation": "subcategory_of"}
-#     ]
+    edge_data = [
+        {"_from": f"{VERTEX_COLLECTION}/{emotion_data[0]['_key']}", "_to": f"{VERTEX_COLLECTION}/{emotion_data[1]['_key']}", "relation": "subcategory_of"},
+        {"_from": f"{VERTEX_COLLECTION}/{emotion_data[1]['_key']}", "_to": f"{VERTEX_COLLECTION}/{emotion_data[2]['_key']}", "relation": "subcategory_of"}
+    ]
 
-#     # Insert emotions (vertices)
-#     emotion_collection = graph.vertex_collection(VERTEX_COLLECTION)
-#     for emotion in emotion_data:
-#         if not emotion_collection.has(emotion["_key"]):
-#             emotion_collection.insert(emotion)
+    # Insert emotions (vertices)
+    emotion_collection = graph.vertex_collection(VERTEX_COLLECTION)
+    for emotion in emotion_data:
+        if not emotion_collection.has(emotion["_key"]):
+            emotion_collection.insert(emotion)
 
-#     # Insert edges (relationships)
-#     edge_collection = graph.edge_collection(EDGE_COLLECTION)
-#     for edge in edge_data:
-#         edge_collection.insert(edge)
+    # Insert edges (relationships)
+    edge_collection = graph.edge_collection(EDGE_COLLECTION)
+    for edge in edge_data:
+        edge_collection.insert(edge)
 
 #     print("Graph created successfully!")
 @app.route("/qa", methods=["POST"])
@@ -165,11 +169,18 @@ def qa():
         1. First, identify the primary emotion that best matches the input using OR operator
         2. Then, find the corresponding secondary emotion
         3. Finally, return only the tertiary emotion associated with these emotions
-        
-        If no exact tertiary emotion is found, return the most closely related tertiary emotion.
-        Return only the emotion name without any additional explanation. If the emotion is not found, return 'Not found'"""
+        """
     )
-    return str(result["result"])
+    # Get only the Emotion Names from the result
+    # print(f"Result: {result['result']}")
+    # Extract the emotion names from the result
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant that extracts emotion names from text. Return only the emotion names in an array, no text or explanation"},
+        {"role": "user", "content": f"Extract the emotion names from the following text: {result['result']}"}
+    ]
+    ai_msg = llm.invoke(messages)
+    # print(f"AI Message: {ai_msg}")
+    return jsonify({"emotions": json.loads(ai_msg.content), "qa_result": str(result['result'])}), 200
 
 if __name__ == "__main__":
     print("Server is running")
